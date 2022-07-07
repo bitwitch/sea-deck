@@ -1,6 +1,13 @@
+/*
+ * This program parses a C declaration and translates it to an English sentence.
+ * It is an programming challenge issued in the book "Expert C Programming:
+ * Deep C Secrets" by Peter Van Der Linden 
+ */
+
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define MAX_TOKEN_LENGTH 256
 #define MAX_TOKENS 64
@@ -29,8 +36,16 @@ void read_to_first_identifier(void);
 /* parsing routines */
 void parse_function_args(void);
 void parse_arrays(void);
-void parse_any_pointers(void);
+void parse_pointers(void);
 void parse_declarator(void);
+
+
+void read_to_first_identifier(void) {
+    while (get_token(), current.type != TOKEN_TYPE_IDENTIFIER)
+        stack[sp++] = current;
+    printf("%s is a", current.string);
+    get_token();
+}
 
 void get_token(void) {
     int i = 0;
@@ -69,7 +84,7 @@ void get_token(void) {
         current.type = classify_string();
     }
 
-    printf("token is %s\n", current.string);
+    /*printf("token is %s\n", current.string);*/
 }
 
 Token_Type classify_string(void) {
@@ -101,19 +116,61 @@ Token_Type classify_string(void) {
     return TOKEN_TYPE_IDENTIFIER;
 }
 
+void parse_declarator(void) {
+    if (current.type == '[') 
+        parse_arrays();
+    else if (current.type == '(') 
+        parse_function_args();
 
-void read_to_first_identifier(void) {
-    do {
+    parse_pointers();
+
+    Token left;
+    while (sp > 0) {
+        left = stack[--sp];
+        if (left.type == '(') {
+            if (current.type != ')') {
+                get_token();
+                if (current.type != ')') {
+                    fprintf(stderr, "expected closing ')' to match '(' on the stack, but found %c instead\n", current.type);
+                    exit(1);
+                }
+            }
+            get_token();
+            parse_declarator();
+        } else if (left.type == '*') {
+            printf(" pointer to");
+        } else {
+            printf(" %s", left.string);
+        }
+    }
+}
+
+void parse_arrays(void) {
+    while (current.type == '[') {
+        printf(" array of");
+        while (get_token(), current.type != ']')
+            printf(" %s", current.string);
         get_token();
-        stack[sp++] = current;
-    } while (current.type != TOKEN_TYPE_IDENTIFIER);
-    printf("identifier is %s\n", current.string);
-    get_token();
+    }
+}
+
+void parse_function_args(void) {
+    while (get_token(), current.type != ')') {
+        /* TODO(shaw): handle function arguments */
+    }
+    printf(" function returning");
+}
+
+void parse_pointers(void) {
+    while (sp > 0 && stack[sp-1].type == '*') {
+        printf(" pointer to");
+        --sp;
+    }
 }
 
 int main(void) {
     read_to_first_identifier();
-    /*parse_declarator();*/
+    parse_declarator();
+    printf("\n");
     return 0;
 }
-
