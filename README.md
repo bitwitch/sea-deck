@@ -1,6 +1,6 @@
 ### C Declaration Parser
 This program parses a C declaration and translates it to an English sentence.  
-It is an programming challenge issued in the book *Expert C Programming:  
+It is a programming challenge issued in the book *Expert C Programming:  
 Deep C Secrets* by Peter Van Der Linden   
  
 #### Build
